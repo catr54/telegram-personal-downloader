@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Telegram Personal Downloader</title>
+  <style>
+    * { box-sizing: border-box; }
+    html { height: 100%; }
+    body { width: var(--panel-width, 480px); height: var(--panel-height, 600px); margin: 0; display: flex; flex-direction: column; font: 14px/1.55 system-ui, sans-serif; color: #172b40; background: #f4f7fb; }
+    .panel-header { flex: none; padding: 12px 16px 10px; background: #fff; border-bottom: 1px solid #ccd8e4; }
+    .panel-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 0 16px 16px; scrollbar-gutter: stable; }
+    h1 { font-size: 18px; margin: 0; }
+    h2 { font-size: 16px; margin: 14px 0 6px; }
+    button, input, select { font: inherit; }
+    button { border: 1px solid transparent; border-radius: 8px; background: #1269b3; color: white; padding: 7px 11px; cursor: pointer; font-weight: 600; line-height: 1.4; }
+    button:hover { filter: brightness(.94); }
+    button:disabled { opacity: .5; cursor: default; }
+    button.secondary { background: #e8eef5; color: #243b53; border-color: #c8d4e0; }
+    button.is-selected { background: #167348; color: white; border-color: #116039; }
+    button.is-partial { background: #fff0ce; color: #704300; border-color: #b88428; }
+    :is(button, input, select, summary):focus-visible { outline: 3px solid #367bc9; outline-offset: 2px; }
+    input[type=checkbox] { width: 17px; height: 17px; accent-color: #167348; vertical-align: middle; flex: none; }
+    select { padding: 5px 8px; border: 1px solid #acbdcf; border-radius: 6px; color: #172b40; background: white; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 7px 0; flex-wrap: wrap; }
+    .toolbar { justify-content: flex-start; }
+    .item { border-top: 1px solid #d7e1eb; padding: 10px 8px; overflow-wrap: anywhere; border-radius: 6px; }
+    .item.is-selected { background: #eef8f2; box-shadow: inset 3px 0 #167348; }
+    .media-label { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+    .media-label input { margin-top: 3px; }
+    .muted { color: #4c6176; font-size: 13px; }
+    #message { min-height: 20px; margin-top: 5px; }
+    #count { font-weight: 600; }
+    #history { overflow-wrap: anywhere; }
+    #media { overflow-wrap: anywhere; }
+    details { background: white; padding: 10px; border: 1px solid #cdd9e5; border-radius: 9px; margin: 10px 0; }
+    summary { cursor: pointer; font-weight: 600; }
+    .setting { display: block; margin: 9px 0; }
+    .setting input[type=text] { display: block; width: 100%; margin-top: 4px; padding: 8px; border: 1px solid #acbdcf; border-radius: 6px; }
+    .group { margin: 10px 0; padding: 10px; background: white; border: 1px solid #cbd8e5; border-radius: 9px; }
+    .group-title { display: flex; align-items: center; gap: 7px; width: 100%; font-weight: 600; text-align: left; margin-bottom: 7px; }
+    details.group-files { margin: 7px 0 0; padding: 8px; background: #f7f9fc; }
+    .group-files > summary { color: #245784; padding: 3px 0; }
+    #cacheStatus { margin: 5px 0; }
+    .group-caption { font-weight: 600; margin: 4px 0 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .group-caption, .history-name { overflow-wrap: anywhere; }
+    .actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; padding-left: 25px; }
+    .actions button { padding: 6px 10px; font-size: 13px; }
+    #preview { overflow-wrap: anywhere; background: #edf4fa; padding: 8px; border-radius: 5px; }
+    .ad-rule { padding: 8px 0; border-bottom: 1px solid #d7e1eb; }
+    body.expanded { width: 100%; height: 100vh; }
+    @media (max-width: 420px) { .panel-header { padding: 10px; } .panel-scroll { padding: 0 10px 10px; } button { padding: 7px 9px; } .actions { padding-left: 0; } }
+    @media (max-height: 480px) { .panel-header { padding-top: 8px; padding-bottom: 6px; } .panel-header .row { margin: 5px 0; } #message { font-size: 12px; } }
+  </style>
+</head>
+<body>
+  <header class="panel-header">
+  <div class="row"><h1>Telegram 媒体下载</h1><button id="expandPanel" class="secondary">展开面板</button></div>
+  <div id="message" class="muted">正在读取当前页面…</div>
+  <div class="row"><span id="count">当前聊天：0 个</span><button id="downloadAll">下载勾选媒体</button></div>
+  <div id="filters" class="muted"></div>
+  <div class="row toolbar"><button id="selectAll" class="secondary">全选</button><button id="selectNone" class="secondary">全不选</button><button id="refresh" class="secondary">刷新列表</button></div>
+  </header>
+  <main class="panel-scroll">
+  <div class="row"><button id="scanAll">扫描整个聊天</button><button id="cancelScan" class="secondary">停止扫描</button></div>
+  <div id="scanStatus" class="muted"></div>
+  <div id="cacheStatus" class="muted" role="status"></div>
+  <details>
+    <summary>筛选与命名设置</summary>
+    <label class="setting"><input type="checkbox" id="dedupe"> 合并扫描中的重复媒体</label>
+    <label class="setting"><input type="checkbox" id="filterAds"> 过滤已标记广告及匹配的相似图片</label>
+    <label class="setting"><input type="checkbox" id="skipDownloaded"> 跳过已成功下载的文件</label>
+    <div class="muted">三项独立生效。图片相似匹配可能误判，可关闭或删除广告规则。已下载记录从本版开始按浏览器保存完成结果累计。</div>
+    <label class="setting">下载目录下的子目录（可留空）<input id="baseFolder" type="text" maxlength="120"></label>
+    <label class="setting">多媒体消息的文件夹名<input id="folderTemplate" type="text" maxlength="180"></label>
+    <label class="setting">文件名<input id="fileTemplate" type="text" maxlength="180"></label>
+    <label class="setting">时间格式<input id="timeFormat" type="text" maxlength="80"></label>
+    <div class="muted">命名标记：{text} 消息文字，无文字时用时间；{timestamp} 时间；{date} 日期；{time} 时分秒；{messageId} 消息编号；{index} 两位序号；{type} 媒体类型；{original} 原文件名；{ext} 扩展名。不写 {ext} 会自动补扩展名。</div>
+    <div class="muted">时间格式：YYYY 年、MM 月、DD 日、HH 时、mm 分、ss 秒。命名文本中的特殊字符会替换为下划线。</div>
+    <p class="muted">示例路径：</p><div id="preview"></div>
+    <p><button id="saveSettings">保存设置</button></p>
+  </details>
+  <details><summary>广告规则管理</summary><div id="ads"></div></details>
+  <h2>当前聊天媒体</h2>
+  <label class="setting">时间排序 <select id="sort"><option value="asc">从早到晚</option><option value="desc">从晚到早</option></select></label>
+  <div id="media"></div>
+  <div class="row"><button id="previous" class="secondary">上一页</button><span id="page" class="muted"></span><button id="next" class="secondary">下一页</button></div>
+  <details><summary>下载记录</summary><p><button id="clear" class="secondary">清除下载日志</button></p><div id="history"></div></details>
+  </main>
+  <script src="model.js"></script>
+  <script src="panel.js"></script>
+</body>
+</html>

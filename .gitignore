@@ -1,0 +1,10 @@
+# Local-only files
+work/
+*.log
+*.zip
+*.crx
+*.pem
+.env
+.env.*
+.DS_Store
+Thumbs.db

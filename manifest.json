@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Telegram Personal Downloader",
+  "version": "0.5.2",
+  "description": "Download videos and photos in a Telegram Web chat, with a local queue and history.",
+  "permissions": ["storage", "tabs", "downloads"],
+  "host_permissions": ["https://web.telegram.org/*"],
+  "action": {
+    "default_title": "Telegram Personal Downloader",
+    "default_popup": "popup.html"
+  },
+  "background": { "service_worker": "download-service.js" },
+  "content_scripts": [{
+    "matches": ["https://web.telegram.org/*"],
+    "js": ["model.js", "content.js"],
+    "run_at": "document_idle"
+  }],
+  "web_accessible_resources": [{
+    "resources": ["bridge.js"],
+    "matches": ["https://web.telegram.org/*"]
+  }]
+}
