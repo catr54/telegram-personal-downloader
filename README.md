@@ -8,7 +8,7 @@
 
 ## 界面示例
 
-以下图片基于 v0.5.2 的实际使用截图，经图像工具脱敏处理，已遮挡频道身份、聊天文字及媒体内容。部分文字与细节可能有轻微变化，仅用于说明操作界面。
+以下图片基于 v0.5.2 的实际使用截图，部分文字与细节可能有轻微变化，仅用于说明操作界面。
 
 ### 媒体勾选与整条全选
 
@@ -32,7 +32,7 @@
 
 
 
-从 [Releases](https://github.com/catr54/telegram-personal-downloader/releases) 下载 `telegram-personal-downloader-v0.5.2.zip`。本项目以源码和可加载目录发布，尚未上架 Chrome 应用商店，无需构建或安装依赖。
+从 [Releases](https://github.com/catr54/telegram-personal-downloader/releases) 下载 `telegram-personal-downloader-v0.5.2.zip`。尚未上架 Chrome 应用商店，无需构建或安装依赖。
 
 
 
